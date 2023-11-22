@@ -1,0 +1,54 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id         String    @id @default(auto()) @map("_id") @db.ObjectId
+  name       String
+  phone      String
+  email      String    @unique
+  netAmount  Float     @default(0)
+  expenses   Expense[] @relation("Loaner")
+  repayments Expense[] @relation("Loanee")
+  loans      Event[]   @relation("Payer")
+}
+
+model Expense {
+  id       String @id @default(auto()) @map("_id") @db.ObjectId
+  total    Float
+  paid     Float
+  status   Status @default(PENDING)
+  event    Event  @relation(fields: [eventId], references: [id])
+  loaner   User   @relation("Loaner", fields: [loanerId], references: [id])
+  loanee   User   @relation("Loanee", fields: [loaneeId], references: [id])
+  eventId  String @db.ObjectId
+  loanerId String @db.ObjectId
+  loaneeId String @db.ObjectId
+}
+
+model Event {
+  id          String    @id @default(auto()) @map("_id") @db.ObjectId
+  description String
+  amount      Float
+  payer       User      @relation("Payer", fields: [payerId], references: [id])
+  category    Category  @default(OTHER)
+  expenses    Expense[]
+  payerId     String    @db.ObjectId
+}
+
+enum Status {
+  PENDING
+  PAID
+}
+
+enum Category {
+  FOOD
+  TRAVEL
+  ENTERTAINMENT
+  OTHER
+}
